@@ -2,6 +2,7 @@
 #define LISH_ERROR_H
 
 #include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
 #include "source.h"
 

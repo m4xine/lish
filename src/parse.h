@@ -1,80 +1,15 @@
 #ifndef LISH_PARSE_H
 #define LISH_PARSE_H
 
-#include "util.h"
+#include <stdbool.h>
+
+#include "vec.h"
+#include "string.h"
 #include "source.h"
 #include "error.h"
 #include "lex.h"
-
-typedef uint8_t node_kind_t;
-enum 
-{
-  NODE_LIST,
-  NODE_NAME,
-  NODE_STR,
-};
-
-typedef struct
-{
-  node_kind_t kind;
-  union
-  {
-    // NODE_LIST
-    vec_t list;
-
-    // NODE_NAME
-    struct { char const *begin, *end; } span;
-  
-    // NODE_STR
-    string_t str;
-  } data;
-} node_t;
-
-void
-node_print_(node_t const *n, int depth)
-{ 
-  printf("%*s", depth, "");
-  switch (n->kind)
-  {
-    case NODE_LIST: 
-      printf("List\n"); 
-      vec_t children = n->data.list;
-      for (size_t i = 0; i < children.len; ++i)
-        node_print_((node_t const *)vec_at(&children, i), depth + 2);
-      break;
-    case NODE_NAME: 
-      printf(
-        "Name: %.*s\n", 
-        (int)(n->data.span.end - n->data.span.begin), 
-        n->data.span.begin
-      ); 
-      break;
-    case NODE_STR:
-      printf("String: %s\n", n->data.str.raw); 
-      break;
-  }
-}
-
-void
-node_print(node_t const *n)
-{
-  node_print_(n, 0);
-}
-
-void
-node_del(node_t *n)
-{
-  switch (n->kind)
-  {
-    case NODE_LIST:
-      vec_del(&n->data.list);
-      break;
-    case NODE_STR:
-      string_del(&n->data.str);
-      break;
-  }
-  memset(n, 0, sizeof(node_t));
-}
+#include "token.h"
+#include "node.h"
 
 typedef uint8_t parselet_result_kind_t;
 enum
