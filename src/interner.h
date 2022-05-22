@@ -21,8 +21,8 @@ interner_(size_t n)
 {
   return (interner_t)
     { 
-      .hashes = vec_new_(sizeof(uint64_t), n),
-      .strings = vec_new_(sizeof(string_t), n)
+      .hashes = vec_(sizeof(uint64_t), n),
+      .strings = vec_(sizeof(string_t), n)
     };
 }
 
@@ -43,10 +43,10 @@ intern(interner_t *in, char const *s)
       return i;
 
   interner_key_t key = (interner_key_t)in->hashes.len;
-  vec_add(&in->hashes, &hash);
+  vec_push(&in->hashes, &hash);
   
   string_t str = string_from_(s, sz);
-  vec_add(&in->strings, &str);
+  vec_push(&in->strings, &str);
 
   return key;
 }
@@ -57,7 +57,7 @@ interner_del(interner_t *in)
   for (size_t i = 0; i < in->strings.len; ++i)
     string_del((string_t *)vec_at(&in->strings, i));
   vec_del(&in->hashes);
-  vec_del(&in->strings)
+  vec_del(&in->strings);
   memset(in, 0, sizeof(interner_t));
 }
 
