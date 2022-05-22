@@ -23,7 +23,7 @@ main(int argc, char **argv)
   }
 
   vec_t toks = vec_null(sizeof(token_t));
-  vec_t errs = vec_null(1 /* TEMP */);
+  vec_t errs = vec_null(sizeof(error_t));
   lex(&source, &toks, &errs);
 
   for (size_t i = 0; i < errs.len; ++i)
