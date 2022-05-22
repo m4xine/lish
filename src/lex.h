@@ -6,6 +6,7 @@
 #include "string.h"
 #include "source.h"
 #include "error.h"
+#include "interner.h"
 #include "token.h"
 
 #define LEX_TOKS_DEFAULT_CAP 1024
@@ -14,6 +15,7 @@ typedef struct
 {
   char const *p;
   source_t const *src;
+  interner_t *intern;
   vec_t *toks, *errs;
 } lex_state_t;
 
@@ -40,6 +42,7 @@ LEXLET(lex_whitespace, s)
 LEXLET(lex_paren, s)
 {
   token_kind_t kind;
+  char const *begin = s->p;
 
   switch (*s->p) 
   {
@@ -48,12 +51,17 @@ LEXLET(lex_paren, s)
     default: return LEX_NONE;
   }
 
+  ++s->p;
+
   vec_push(
     s->toks, 
-    &(token_t) { .kind = kind }
+    &(token_t) 
+      { 
+        .kind = kind,
+        .begin = begin,
+        .end = s->p 
+      }
   );
-
-  ++s->p;
 
   return LEX_OK;
 }
@@ -66,11 +74,14 @@ LEXLET(lex_name, s)
 
     while (IS_ALPHA(*s->p) || IS_NUM(*s->p)) ++s->p;
   
+    interner_key_t key = intern_(s->intern, begin, (size_t)(s->p - begin));
+
     token_t tok = (token_t)
       {
         .kind = TOK_NAME,
         .begin = begin,
-        .end = s->p
+        .end = s->p,
+        .data.key = key
       };
 
     vec_push(s->toks, &tok);
@@ -110,6 +121,8 @@ LEXLET(lex_str, s)
       &(token_t)
         {
           .kind = TOK_STR,
+          .begin = begin,
+          .end = s->p,
           .data.str = str
         }
     );
@@ -129,7 +142,7 @@ lexlet_t const LEXLETS[] =
   };
 
 int
-lex(source_t const *src, vec_t *out, vec_t *errs)
+lex(source_t const *src, interner_t *intern, vec_t *out, vec_t *errs)
 {
   vec_fit(out, LEX_TOKS_DEFAULT_CAP);
 
@@ -137,6 +150,7 @@ lex(source_t const *src, vec_t *out, vec_t *errs)
     {
       .p = src->raw,
       .src = src,
+      .intern = intern,
       .toks = out,
       .errs = errs
     };

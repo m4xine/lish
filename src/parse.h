@@ -79,11 +79,19 @@ PARSELET(parselet_list, s)
           continue;
         case PARSE_ERR: return ERR;
         case PARSE_NONE: 
-          
-          return ERR;    
+          {
+            error_t err = error(
+              ERR_FATAL,
+              begin_tok->begin,
+              "Expected list item"
+            );
+            vec_push(s->errs, &err);
+            return ERR;
+          } 
       }
     }
 
+    token_t const *end_tok = NULL;
     if (true == END(s))
     {
       error_t err = error(
@@ -95,11 +103,17 @@ PARSELET(parselet_list, s)
       return ERR;
     }
     // Skip, it's the closing right parenthesis.
-    else ++s->p;
+    else 
+    {
+      end_tok = CUR(s);
+      s->p++;
+    }
 
     node_t n = (node_t) 
       { 
         .kind = NODE_LIST,
+        .begin = begin_tok->begin,
+        .end = end_tok->end,
         .data.list = children
       };
     return OK(n);
@@ -118,8 +132,9 @@ PARSELET(parselet_name, s)
     node_t n = (node_t)
       {
         .kind = NODE_NAME,
-        .data.span.begin = tok->begin,
-        .data.span.end = tok->end
+        .begin = tok->begin,
+        .end = tok->end,
+        .data.key = tok->data.key
       };
     return OK(n);
   }
@@ -137,6 +152,8 @@ PARSELET(parselet_str, s)
     node_t n = (node_t)
       { 
         .kind = NODE_STR,
+        .begin = tok->begin,
+        .end = tok->end,
         .data.str = string_clone(&tok->data.str)
       };
     return OK(n);

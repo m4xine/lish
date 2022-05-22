@@ -1,4 +1,5 @@
 #include "vec.h"
+#include "interner.h"
 #include "source.h"
 #include "error.h"
 #include "lex.h"
@@ -23,9 +24,10 @@ main(int argc, char **argv)
     return 1;
   }
 
+  interner_t intern = interner();
   vec_t toks = vec_null(sizeof(token_t));
   vec_t errs = vec_null(sizeof(error_t));
-  lex(&source, &toks, &errs);
+  lex(&source, &intern, &toks, &errs);
 
   for (size_t i = 0; i < toks.len; ++i)
   {
@@ -55,6 +57,7 @@ main(int argc, char **argv)
     token_del((token_t *)vec_at(&toks, i));
   vec_del(&toks);
   vec_del(&errs);
+  interner_del(&intern);
   source_del(&source);
 
   return 0;

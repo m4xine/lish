@@ -17,13 +17,14 @@ enum
 typedef struct
 {
   node_kind_t kind;
+  char const *begin, *end;
   union
   {
     // NODE_LIST
     vec_t list;
 
     // NODE_NAME
-    struct { char const *begin, *end; } span;
+    interner_key_t key;
   
     // NODE_STR
     string_t str;
@@ -44,9 +45,10 @@ node_print_(node_t const *n, int depth)
       break;
     case NODE_NAME: 
       printf(
-        "Name: %.*s\n", 
-        (int)(n->data.span.end - n->data.span.begin), 
-        n->data.span.begin
+        "Name: %.*s (%zu)\n", 
+        (int)(n->end - n->begin), 
+        n->begin,
+        n->data.key
       ); 
       break;
     case NODE_STR:

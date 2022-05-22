@@ -33,10 +33,9 @@ interner(void)
 }
 
 interner_key_t
-intern(interner_t *in, char const *s)
+intern_(interner_t *in, char const *s, size_t n)
 {
-  size_t sz = strlen(s);
-  uint64_t hash = fnv1a(s, sz);
+  uint64_t hash = fnv1a(s, n);
 
   for (size_t i = 0; i < in->hashes.len; ++i)
     if (hash == *(uint64_t *)vec_at(&in->hashes, i))
@@ -45,10 +44,16 @@ intern(interner_t *in, char const *s)
   interner_key_t key = (interner_key_t)in->hashes.len;
   vec_push(&in->hashes, &hash);
   
-  string_t str = string_from_(s, sz);
+  string_t str = string_from_(s, n);
   vec_push(&in->strings, &str);
 
   return key;
+}
+
+interner_key_t
+intern(interner_t *in, char const *s)
+{
+  return intern_(in, s, strlen(s));
 }
 
 void 

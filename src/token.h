@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "string.h"
+#include "interner.h"
 
 typedef uint8_t token_kind_t;
 enum
@@ -33,6 +34,9 @@ typedef struct
   char const *begin, *end;
   union 
   {
+    // TOK_NAME
+    interner_key_t key;
+
     // TOK_STR
     string_t str;
   } data;
@@ -47,9 +51,10 @@ token_print(token_t const *t)
     case TOK_RPAREN: printf("RParen"); break;
     case TOK_NAME: 
       printf(
-        "Name: %.*s", 
+        "Name: %.*s (%zu)", 
         (int)(t->end - t->begin), 
-        t->begin
+        t->begin,
+        t->data.key
       ); 
       break;
     case TOK_STR: 
