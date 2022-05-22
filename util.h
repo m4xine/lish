@@ -165,7 +165,7 @@ string_init(string_t *s)
   if (0 == s->cap) s->cap = VEC_DEFAULT_CAP;
   if (NULL == s->raw) 
   {
-    s->raw = malloc(s->cap);
+    s->raw = malloc(s->cap + 1);
     *s->raw = 0;
   }
 }
@@ -176,7 +176,7 @@ string_grow(string_t *s, size_t n)
   string_init(s);
 
   while (s->cap < s->len + n) s->cap *= 2;
-  s->raw = realloc(s->raw, s->cap);
+  s->raw = realloc(s->raw, s->cap + 1);
 }
 
 void
@@ -194,6 +194,19 @@ string_append_(string_t *s, char const *p, size_t n)
   memcpy(s->raw + s->len, p, n);
   s->len += n;
   *(s->raw + s->len) = 0; 
+}
+
+string_t 
+string_clone(string_t const *s)
+{
+  char *buf = malloc(s->cap + 1);
+  memcpy(buf, s->raw, s->len + 1);
+  return (string_t)
+    {
+      .len = s->len,
+      .cap = s->cap,
+      .raw = buf,
+    };
 }
 
 void

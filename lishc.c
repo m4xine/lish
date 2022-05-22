@@ -2,6 +2,7 @@
 #include "source.h"
 #include "error.h"
 #include "lex.h"
+#include "parse.h"
 
 int 
 main(int argc, char **argv) 
@@ -26,6 +27,22 @@ main(int argc, char **argv)
   vec_t errs = vec_null(sizeof(error_t));
   lex(&source, &toks, &errs);
 
+  for (size_t i = 0; i < toks.len; ++i)
+  {
+    token_t *tok = (token_t *)vec_at(&toks, i);
+    token_print(tok);
+  }
+
+  vec_t nodes = vec_null(sizeof(node_t));
+  parse(&toks, &source, &errs, &nodes);
+  
+  for (size_t i = 0; i < nodes.len; ++i)
+  {
+    node_t *n = (node_t *)vec_at(&nodes, i);
+    node_print(n);
+    node_del(n);
+  }
+
   for (size_t i = 0; i < errs.len; ++i)
   {
     error_t *e = (error_t *)vec_at(&errs, i);
@@ -33,13 +50,9 @@ main(int argc, char **argv)
     error_del(e);
   }
 
+  vec_del(&nodes);
   for (size_t i = 0; i < toks.len; ++i)
-  {
-    token_t *tok = (token_t *)vec_at(&toks, i);
-    token_print(tok);
-    token_del(tok);
-  }
-
+    token_del((token_t *)vec_at(&toks, i));
   vec_del(&toks);
   vec_del(&errs);
   source_del(&source);

@@ -23,14 +23,24 @@ enum
   TOK_STR,
 };
 
+char const *
+token_kind_str(token_kind_t kind)
+{
+  switch (kind)
+  {
+    case TOK_LPAREN: return "(";
+    case TOK_RPAREN: return ")";
+    case TOK_NAME: return "Name";
+    case TOK_STR: return "String";
+  }
+}
+
 typedef struct
 {
   token_kind_t kind;
+  char const *begin, *end;
   union 
   {
-    // TOK_NAME
-    struct { char const *begin, *end; } span;
-    
     // TOK_STR
     string_t str;
   } data;
@@ -46,8 +56,8 @@ token_print(token_t const *t)
     case TOK_NAME: 
       printf(
         "Name: %.*s", 
-        (int)(t->data.span.end - t->data.span.begin), 
-        t->data.span.begin
+        (int)(t->end - t->begin), 
+        t->begin
       ); 
       break;
     case TOK_STR: 
@@ -119,11 +129,10 @@ LEXLET(lex_name, s)
   
     token_t tok = (token_t)
       {
-        .kind = TOK_NAME
+        .kind = TOK_NAME,
+        .begin = begin,
+        .end = s->p
       };
-
-    tok.data.span.begin = begin;
-    tok.data.span.end = s->p;
 
     vec_push(s->toks, &tok);
 
