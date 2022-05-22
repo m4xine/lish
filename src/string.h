@@ -81,6 +81,14 @@ string_append_(string_t *s, char const *p, size_t n)
   *(s->raw + s->len) = 0; 
 }
 
+string_t
+string_from_(char const *s, size_t n)
+{
+  string_t str = string_null();
+  string_append_(&str, s, n);
+  return str;
+}
+
 string_t 
 string_clone(string_t const *s)
 {
