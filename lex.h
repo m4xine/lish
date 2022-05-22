@@ -14,8 +14,7 @@ typedef struct
   vec_t *toks, *errs;
 } lex_state_t;
 
-#define token_kind_t uint8_t
-
+typedef uint8_t token_kind_t;
 enum
 {
   TOK_LPAREN,
@@ -69,8 +68,7 @@ token_del(token_t *t)
   memset(t, 0, sizeof(token_t));
 }
 
-#define lexlet_result_t uint8_t
-
+typedef uint8_t lexlet_result_t;
 enum
 {
   LEX_NONE,
