@@ -1,3 +1,3 @@
 #!/bin/sh
 
-gcc -o lishc lishc.c -std=c99
+gcc -o lish lish.c -std=c99
