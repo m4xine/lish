@@ -4,6 +4,7 @@
 #include "error.h"
 #include "lex.h"
 #include "parse.h"
+#include "interp.h"
 
 int 
 main(int argc, char **argv) 
@@ -42,7 +43,6 @@ main(int argc, char **argv)
   {
     node_t *n = (node_t *)vec_at(&nodes, i);
     node_print(n);
-    node_del(n);
   }
 
   for (size_t i = 0; i < errs.len; ++i)
@@ -52,6 +52,10 @@ main(int argc, char **argv)
     error_del(e);
   }
 
+  interp(&nodes, &intern);
+
+  for (size_t i = 0; i < nodes.len; ++i)
+    node_del((node_t *)vec_at(&nodes, i));
   vec_del(&nodes);
   for (size_t i = 0; i < toks.len; ++i)
     token_del((token_t *)vec_at(&toks, i));
