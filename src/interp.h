@@ -39,6 +39,19 @@ invoke(interp_state_t *s, value_t const *f, vec_t const *args)
 {
   switch (f->kind)
   {
+    case VAL_STR:
+      string_t cmd = string_from_(f->data.str.raw, f->data.str.len);
+      string_push(&cmd, ' ');
+      for (size_t i = 0; i < args->len; ++i)
+      {
+        // TODO: Dont assume args type
+        string_t const *s = &((value_t const *)vec_at((vec_t *)args, i))->data.str;
+        string_append_(&cmd, s->raw, s->len);
+      }
+
+      system(cmd.raw);
+      string_del(&cmd);
+      return UNIT;
     case VAL_CFUN:
       return f->data.cfun(args);
   }
