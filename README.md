@@ -13,7 +13,7 @@ Probably not! This is very experimental and I doubt it'd amount to much. It lack
 (deval OUT  './lish')
 (deval ARGS '-std=gnu99')
 
-(if (exists OUT) (rm OUT))
+(if (exists OUT) ('rm' OUT))
 
 (CC '-o ' OUT ' src/lish.c ' ARGS)
 ```

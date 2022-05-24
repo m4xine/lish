@@ -4,6 +4,6 @@
 (deval OUT  './lish')
 (deval ARGS '-std=gnu99')
 
-(if (exists OUT) (rm OUT))
+(if (exists OUT) ('rm' OUT))
 
 (CC '-o ' OUT ' src/lish.c ' ARGS)
