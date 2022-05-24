@@ -39,6 +39,17 @@ LEXLET(lex_whitespace, s)
   return LEX_NONE;
 }
 
+LEXLET(lex_comment, s)
+{
+  if ('#' == *s->p)
+  {
+    while (0 != *s->p && '\n' != *s->p) ++s->p;
+    return LEX_OK;
+  }
+
+  return LEX_NONE;
+}
+
 LEXLET(lex_paren, s)
 {
   token_kind_t kind;
@@ -72,7 +83,11 @@ LEXLET(lex_name, s)
   {
     char const *begin = s->p;
 
-    while (IS_ALPHA(*s->p) || IS_NUM(*s->p)) ++s->p;
+    while (IS_ALPHA(*s->p) 
+      || IS_NUM(*s->p) 
+      || '-' == *s->p 
+      || '_' == *s->p) 
+      ++s->p;
   
     interner_key_t key = intern_(s->intern, begin, (size_t)(s->p - begin));
 
@@ -136,6 +151,7 @@ LEXLET(lex_str, s)
 lexlet_t const LEXLETS[] =
   {
     lex_whitespace,
+    lex_comment,
     lex_paren,
     lex_name,
     lex_str
