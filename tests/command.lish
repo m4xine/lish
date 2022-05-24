@@ -1,1 +1,1 @@
-(echo ('cat' 'tests/command.lish'))
+('cat' 'tests/command.lish')
