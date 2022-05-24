@@ -1,0 +1,3 @@
+(deval some-long_name 'echo')
+
+(some-long_name 'hello!')
