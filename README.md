@@ -29,7 +29,7 @@ Probably not! This is very experimental and I doubt it'd amount to much. It lack
 
 There are more examples [here](https://github.com/m4xine/lish/tree/main/tests)!
 
-# Future plans
+## Future plans
 
 I may add these in the future:
 
