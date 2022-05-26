@@ -56,7 +56,7 @@ error_print(error_t const *e, source_t const *src)
   if (1 == source_loc(src, e->pos, &loc))
     fprintf(stderr, "(%s:<invalid>)", src->origin);
   else
-    fprintf(stderr, "(%s:%zu:%zu)", src->origin, loc.line, loc.col);
+    fprintf(stderr, "(%s:%zu:%zu)", src->origin, loc.line + 1, loc.col + 1);
 
   fprintf(stderr, ": %s\n", e->msg);
 }
