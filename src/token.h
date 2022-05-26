@@ -6,12 +6,14 @@
 #include <string.h>
 #include "string.h"
 #include "interner.h"
+#include "kw.h"
 
 typedef uint8_t token_kind_t;
 enum
 {
   TOK_LPAREN,
   TOK_RPAREN,
+  TOK_KW,
   TOK_NAME,
   TOK_STR,
 };
@@ -23,6 +25,7 @@ token_kind_str(token_kind_t kind)
   {
     case TOK_LPAREN: return "(";
     case TOK_RPAREN: return ")";
+    case TOK_KW: return "Keyword";
     case TOK_NAME: return "Name";
     case TOK_STR: return "String";
   }
@@ -34,6 +37,9 @@ typedef struct
   char const *begin, *end;
   union 
   {
+    // TOK_KW
+    kw_t kw;
+
     // TOK_NAME
     interner_key_t key;
 
@@ -49,6 +55,9 @@ token_print(token_t const *t)
   {
     case TOK_LPAREN: printf("LParen"); break;
     case TOK_RPAREN: printf("RParen"); break;
+    case TOK_KW: 
+      printf("Keyword: %s", kw_str(t->data.kw)); 
+      break;
     case TOK_NAME: 
       printf(
         "Name: %.*s (%zu)", 

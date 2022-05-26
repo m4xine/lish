@@ -77,7 +77,7 @@ LEXLET(lex_paren, s)
   return LEX_OK;
 }
 
-LEXLET(lex_name, s)
+LEXLET(lex_kw_name, s)
 {
   if (IS_ALPHA(*s->p))
   {
@@ -89,6 +89,22 @@ LEXLET(lex_name, s)
       || '_' == *s->p) 
       ++s->p;
   
+    for (size_t i = 0; i < ARRAY_LEN(KEYWORDS); ++i)
+      if (0 == strncmp(begin, KEYWORDS[i], (size_t)(s->p - begin)))
+      {
+        token_t tok = (token_t)
+          {
+            .kind = TOK_KW,
+            .begin = begin,
+            .end = s->p,
+            .data.kw = i
+          };
+        
+        vec_push(s->toks, &tok);
+
+        return LEX_OK;
+      }
+
     interner_key_t key = intern_(s->intern, begin, (size_t)(s->p - begin));
 
     token_t tok = (token_t)
@@ -153,7 +169,7 @@ lexlet_t const LEXLETS[] =
     lex_whitespace,
     lex_comment,
     lex_paren,
-    lex_name,
+    lex_kw_name,
     lex_str
   };
 
