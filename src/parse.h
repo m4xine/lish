@@ -35,6 +35,24 @@ parselet_result_bind(parselet_result_t x,
   }
 }
 
+void
+parselet_result_print(parselet_result_t const *res)
+{
+  switch (res->kind)
+  {
+    case PARSE_OK:
+      printf("Ok:\n");
+      node_print_(&res->opt_node, 2);
+      break;
+    case PARSE_ERR:
+      printf("Err\n");
+      break;
+    case PARSE_NONE:
+      printf("None\n");
+      break;
+  }
+}
+
 #define OK(n) ((parselet_result_t) \
   {                                \
     .kind = PARSE_OK,              \
@@ -61,7 +79,61 @@ typedef struct
 
 #define CUR(s) ((token_t const *)vec_at((vec_t *)(s)->toks, (s)->p))
 #define END(s) ((s)->p >= (s)->toks->len)
-#define EXPECT_KIND(s,k) ((k) == CUR(s)->kind)
+#define IS_KIND(s,k) ((k) == CUR(s)->kind)
+#define GET_CHILD(n, i) ((node_t const *)vec_at((vec_t *)&(n)->data.list, i))
+#define HAS_CHILD(n, i) (NODE_LIST == (n)->kind && i < (n)->data.list.len)
+#define HAS_CHILD_KIND(n, k, i) (HAS_CHILD(n, i) && (k) == GET_CHILD(n, i)->kind)  
+#define EXPECT_CHILD(s, n, i)     \
+  {                               \
+    if (!HAS_CHILD(n, i))         \
+    {                             \
+      error_t err = error(        \
+        ERR_FATAL,                \
+        n->begin,                 \
+        "Expected child at %zu",  \
+        i + 1                     \
+      );                          \
+      vec_push((s)->errs, &err);  \
+      return ERR;                 \
+    }                             \
+  }
+#define EXPECT_CHILD_KIND(s, n, k, i) \
+  {                                   \
+    if (!HAS_CHILD_KIND(n, k, i))     \
+    {                                 \
+      error_t err = error(            \
+        ERR_FATAL,                    \
+        n->begin,                     \
+        "Expected %s at %zu",         \
+        node_kind_str(k),             \
+        i + 1                         \
+      );                              \
+      vec_push((s)->errs, &err);      \
+      return ERR;                     \
+    }                                 \
+  }
+#define EXPECT_NO_EXCESS(s, n, i)         \
+  {                                       \
+    if (HAS_CHILD(n, i + 1))              \
+    {                                     \
+      error_t err = error(                \
+        ERR_FATAL,                        \
+        n->begin,                         \
+        "Unexpected excess child at %zu", \
+        i + 2                             \
+      );                                  \
+      vec_push((s)->errs, &err);          \
+      return ERR;                         \
+    }                                     \
+  }
+#define MATCH_CHILD(n, i, f)                                    \
+  (NODE_LIST == (n)->kind                                       \
+    && i < (n)->data.list.len                                   \
+    && f((node_t const *)vec_at((vec_t *)&(n)->data.list, i)))  
+#define MATCH_KW_PRED(kw_) LAMBDA(bool, (node_t const *n) \
+  {                                                       \
+    return NODE_KW == n->kind && (kw_) == n->data.kw;     \
+  })                                                      \
 
 typedef parselet_result_t(*p1_parselet_t)(parse_state_t *);
 typedef parselet_result_t(*p2_parselet_t)(parse_state_t *, node_t const *);
@@ -77,7 +149,7 @@ p2_parse(parse_state_t *s, node_t const *);
 
 P1(p1_name, s)
 {
-  if (EXPECT_KIND(s, TOK_NAME))
+  if (IS_KIND(s, TOK_NAME))
   {
     token_t const *tok = CUR(s);
     ++s->p;
@@ -97,7 +169,7 @@ P1(p1_name, s)
 
 P1(p1_str, s)
 {
-  if (EXPECT_KIND(s, TOK_STR))
+  if (IS_KIND(s, TOK_STR))
   {
     token_t const *tok = CUR(s);
     ++s->p;
@@ -117,7 +189,7 @@ P1(p1_str, s)
 
 P1(p1_kw, s)
 {
-  if (EXPECT_KIND(s, TOK_KW))
+  if (IS_KIND(s, TOK_KW))
   {
     token_t const *tok = CUR(s);
     ++s->p;
@@ -137,13 +209,13 @@ P1(p1_kw, s)
 
 P1(p1_list, s)
 {
-  if (EXPECT_KIND(s, TOK_LPAREN))
+  if (IS_KIND(s, TOK_LPAREN))
   {
     token_t const *begin_tok = CUR(s);
     ++s->p;
 
     vec_t children = vec_null(sizeof(node_t));
-    while (!END(s) && !EXPECT_KIND(s, TOK_RPAREN))
+    while (!END(s) && !IS_KIND(s, TOK_RPAREN))
     {
       token_t const *before_plet = CUR(s);
       parselet_result_t res = p1_parse_once(s);
@@ -225,8 +297,128 @@ p1_parse_once(parse_state_t *s)
   return NONE;
 }
 
+P2(p2_if, s, n)
+{
+  if (MATCH_CHILD(n, 0, MATCH_KW_PRED(KW_IF)))
+  {
+    EXPECT_CHILD(s, n, 1);
+
+    node_t *true_branch = CLONE(GET_CHILD(n, 1)),
+           *false_branch = NULL;
+
+    if (HAS_CHILD(n, 2))
+    {
+      false_branch = CLONE(GET_CHILD(n, 2));
+      EXPECT_NO_EXCESS(s, n, 2);
+    }
+
+    node_t ret = (node_t)
+      {
+        .kind = NODE_IF,
+        .begin = n->begin,
+        .end = n->end,
+        .data.if_.true_branch = true_branch,
+        .data.if_.opt_false_branch = false_branch,
+      };
+    
+    return OK(ret);
+  }
+
+  return NONE;
+}
+
+P2(p2_defun, s, n)
+{
+  if (MATCH_CHILD(n, 0, MATCH_KW_PRED(KW_DEFUN)))
+  {
+    EXPECT_CHILD_KIND(s, n, NODE_NAME, 1);
+    EXPECT_CHILD_KIND(s, n, NODE_LIST, 2);
+    EXPECT_CHILD(s, n, 3);
+    EXPECT_NO_EXCESS(s, n, 3);
+
+    node_t const *n2 = GET_CHILD(n, 2);
+    vec_t const *n2_children = &n2->data.list;
+    vec_t params = vec_(sizeof(interner_key_t), n2_children->cap);
+    for (size_t i = 0; i < n2_children->len; ++i)
+    {
+      EXPECT_CHILD_KIND(s, n2, NODE_NAME, i);
+      vec_push(&params, &GET_CHILD(n2, i)->data.key);
+    }
+
+    node_t ret = (node_t)
+      {
+        .kind = NODE_DEFUN,
+        .begin = n->begin,
+        .end = n->end,
+        .data.defun.name = GET_CHILD(n, 1)->data.key,
+        .data.defun.params = params,
+        .data.defun.body = CLONE(GET_CHILD(n, 3))
+      };
+    return OK(ret);
+  }
+
+  return NONE;
+}
+
+P2(p2_deval, s, n)
+{
+  if (MATCH_CHILD(n, 0, MATCH_KW_PRED(KW_DEVAL)))
+  {
+    EXPECT_CHILD_KIND(s, n, NODE_NAME, 1);
+    EXPECT_CHILD(s, n, 2);
+    EXPECT_NO_EXCESS(s, n, 2);
+
+    node_t ret = (node_t)
+      {
+        .kind = NODE_DEVAL,
+        .begin = n->begin,
+        .end = n->end,
+        .data.deval.name = GET_CHILD(n, 1)->data.key,
+        .data.deval.value = CLONE(GET_CHILD(n, 1))
+      };
+    return OK(ret);
+  }
+
+  return NONE;
+}
+
+P2(p2_list, s, n)
+{
+  if (NODE_LIST == n->kind)
+  {
+    vec_t children = vec_(sizeof(node_t), n->data.list.cap);
+    for (size_t i = 0; i < n->data.list.len; ++i)
+    {
+      node_t const *child = (node_t const *)vec_at((vec_t *)&n->data.list, i);
+      parselet_result_t res = p2_parse(s, child);
+      switch (res.kind)
+      {
+        case PARSE_OK: 
+          vec_push(&children, &res.opt_node);
+          break;
+        default: return res;
+      }
+    }
+
+    node_t ret = (node_t)
+      {
+        .kind = NODE_LIST,
+        .begin = n->begin,
+        .end = n->end,
+        .data.list = children
+      };
+    return OK(ret);
+  }
+
+  return NONE;
+}
+
 p2_parselet_t const P2_PARSELETS[] =
   {
+    p2_if,
+    p2_defun,
+    p2_deval,
+    p2_list
   };
 
 parselet_result_t
@@ -308,7 +500,13 @@ parse(vec_t    const *toks,
 #undef OK
 #undef ERR
 #undef NONE
-#undef EXPECT_KIND
+#undef MATCH_KW_PRED
+#undef MATCH_CHILD
+#undef EXPECT_NO_EXCESS
+#undef EXPECT_CHILD_KIND
+#undef HAS_CHILD_KIND
+#undef GET_CHILD
+#undef IS_KIND
 #undef CUR
 #undef END
 
