@@ -1,4 +1,8 @@
 (defun test () 
   (echo 'Hello, world!'))
 
+(defun my-echo (str)
+  (echo str))
+
 (test)
+(my-echo 'hello, world!')
