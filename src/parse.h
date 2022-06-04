@@ -374,7 +374,7 @@ P2(p2_deval, s, n)
         .begin = n->begin,
         .end = n->end,
         .data.deval.name = GET_CHILD(n, 1)->data.key,
-        .data.deval.value = CLONE(GET_CHILD(n, 1))
+        .data.deval.value = CLONE(GET_CHILD(n, 2))
       };
     return OK(ret);
   }
