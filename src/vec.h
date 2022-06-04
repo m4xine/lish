@@ -89,6 +89,12 @@ vec_at(vec_t *v, size_t i)
 }
 
 void
+vec_clear(vec_t *v)
+{
+  v->len = 0;
+}
+
+void
 vec_del(vec_t *v) 
 {
   if (NULL != v->raw) free(v->raw);
