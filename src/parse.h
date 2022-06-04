@@ -303,22 +303,24 @@ P2(p2_if, s, n)
   {
     EXPECT_CHILD(s, n, 1);
 
-    node_t *true_branch = CLONE(GET_CHILD(n, 1)),
-           *false_branch = NULL;
+    node_t *cond          = CLONE(GET_CHILD(n, 1)),
+           *true_branch   = CLONE(GET_CHILD(n, 2)),
+           *false_branch  = NULL;
 
-    if (HAS_CHILD(n, 2))
+    if (HAS_CHILD(n, 3))
     {
-      false_branch = CLONE(GET_CHILD(n, 2));
-      EXPECT_NO_EXCESS(s, n, 2);
+      false_branch = CLONE(GET_CHILD(n, 3));
+      EXPECT_NO_EXCESS(s, n, 3);
     }
 
     node_t ret = (node_t)
       {
-        .kind = NODE_IF,
-        .begin = n->begin,
-        .end = n->end,
-        .data.if_.true_branch = true_branch,
-        .data.if_.opt_false_branch = false_branch,
+        .kind                       = NODE_IF,
+        .begin                      = n->begin,
+        .end                        = n->end,
+        .data.if_.cond              = cond,
+        .data.if_.true_branch       = true_branch,
+        .data.if_.opt_false_branch  = false_branch,
       };
     
     return OK(ret);
