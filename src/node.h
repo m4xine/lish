@@ -56,8 +56,9 @@ struct node_t
     // NODE_IF
     struct 
     {
-      node_t *true_branch,
-             *opt_false_branch;
+      node_t  *cond,
+              *true_branch,
+              *opt_false_branch;
     } if_;
 
     // NODE_DEFUN
