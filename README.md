@@ -1,39 +1,17 @@
-# Li(sp)sh(ell)
+# li(sp)sh(ell)
 
-## Can I use this?
+*NOTICE! Lish is still in its experimental phase and is very early in development, don't use it for anything important just yet.*
 
-Probably not! This is very experimental and I doubt it'd amount to much. It lacks a lot of the features most shells have that I'll most likely not have time to add.
+## About
 
-## Examples
+Lish is a shell and scripting language with lisp syntax, designed to be accessible while robust enough for larger programs.
 
-```lisp
-#!/bin/lish
+## Learn more
 
-(deval CC   'cc')
-(deval OUT  './lish')
-(deval ARGS '-std=gnu99')
+  + [Installation Manual](/docs/install-man.md) - How to install and use Lish
 
-(if (exists OUT) ('rm' OUT))
+## License
 
-(CC '-o ' OUT ' src/lish.c ' ARGS)
-```
+Copyright (c) 2022 Maxine D.
 
-```lisp
-#!/bin/lish
-
-(defun dog-say (msg) 
-  (echo 'woof woof ' msg))
-
-(dog-say 'i am a dog.')
-```
-
-There are more examples [here](https://github.com/m4xine/lish/tree/main/tests)!
-
-## Future plans
-
-I may add these in the future:
-
-  + Records
-  + More built-in functions 
-  + Comprehensive errors
-  + Error recovery
+Licensed under the MIT License. You can obtain a copy of the License at http://opensource.org/licenses/MIT.
