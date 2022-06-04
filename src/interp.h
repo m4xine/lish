@@ -49,7 +49,7 @@ stack_get(interp_state_t *s, interner_key_t key)
 
     if (e->key == key) 
     {
-      printf("DEBUG: Got %zu\n", key);
+      if (s->debug) printf("DEBUG: Got %zu\n", key);
       return &e->value;
     }
   }
@@ -207,19 +207,12 @@ eval(interp_state_t *s, node_t const *n)
   return UNIT;
 }
 
-int
-interp(vec_t const *nodes, interner_t *in)
+void
+push_cfuns(interp_state_t *s, interner_t *in)
 {
-  interp_state_t s = (interp_state_t)
-    {
-      .debug      = true,
-      .show_exec  = true,
-      .stack      = vec_(sizeof(stack_entry_t), 256)
-    };
-
   for (size_t i = 0; i < ARRAY_LEN(CFUNS); ++i)
     stack_push(
-      &s,
+      s,
       intern(in, CFUNS[i].name), 
       (value_t)
         {
@@ -227,6 +220,19 @@ interp(vec_t const *nodes, interner_t *in)
           .data.cfun = CFUNS[i].f
         }
     );
+}
+
+int
+interp(vec_t const *nodes, interner_t *in)
+{
+  interp_state_t s = (interp_state_t)
+    {
+      .debug      = false,
+      .show_exec  = true,
+      .stack      = vec_(sizeof(stack_entry_t), 256)
+    };
+
+  push_cfuns(&s, in);
 
   for (size_t i = 0; i < nodes->len; ++i)
   {
